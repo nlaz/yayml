@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YAYML to HTML Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-yellow-50/40 h-screen">
+    <div class="flex h-screen p-4">
+      <div class="border border-black/60 w-full mr-2 flex flex-col">
+        <h2 class="text-black/60 text-sm">YAYML Editor</h2>
+        <textarea
+          id="yaymlInput"
+          placeholder="Enter your YAYML here..."
+          class="w-full placeholder bg-transparent resize-none font-mono flex-grow py-3 px-1 text-sm"
+        ></textarea>
+      </div>
+      <div class="border border-black/60 w-full ml-2">
+        <h2 class="text-sm text-black/60">HTML Preview</h2>
+        <div id="htmlPreview"></div>
+      </div>
+    </div>
+    <div id="errorDisplay"></div>
+
+    <script>
+      function parseYAYML(yayml) {
+        const lines = yayml.split("\n");
+        let html = "";
+        let stack = [];
+        let indentLevel = 0;
+
+        function parseAttributes(attrs) {
+          if (!attrs) return "";
+          return attrs
+            .split(",")
+            .map((attr) => {
+              const [key, ...values] = attr.split("=");
+              const value = values
+                .join("=")
+                .trim()
+                .replace(/^["']|["']$/g, "");
+              return `${key.trim()}="${value}"`;
+            })
+            .join(" ");
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const trimmedLine = line.trim();
+          if (trimmedLine === "") continue;
+
+          const currentIndent = line.search(/\S/);
+
+          while (currentIndent < indentLevel && stack.length > 0) {
+            html += "  ".repeat(indentLevel - 1) + `</${stack.pop()}>\n`;
+            indentLevel -= 2;
+          }
+
+          const match = trimmedLine.match(/^(\w+)(\(.*?\))?:(.*)$/);
+          if (match) {
+            const [, tag, attrs, content] = match;
+            const attributes = parseAttributes(attrs ? attrs.slice(1, -1) : "");
+            html += "  ".repeat(indentLevel) + `<${tag} ${attributes}>`;
+
+            if (content.trim()) {
+              html += content.trim() + `</${tag}>\n`;
+            } else {
+              html += "\n";
+              stack.push(tag);
+              indentLevel += 2;
+            }
+          } else if (trimmedLine.startsWith("-")) {
+            const content = trimmedLine.slice(1).trim();
+            html += "  ".repeat(indentLevel) + `<li>${content}</li>\n`;
+          } else {
+            html += "  ".repeat(indentLevel) + trimmedLine + "\n";
+          }
+        }
+
+        while (stack.length > 0) {
+          html += "  ".repeat(indentLevel - 1) + `</${stack.pop()}>\n`;
+          indentLevel -= 2;
+        }
+
+        return html;
+      }
+
+      function updatePreview() {
+        const yaymlInput = document.getElementById("yaymlInput").value;
+        const htmlPreview = document.getElementById("htmlPreview");
+        const errorDisplay = document.getElementById("errorDisplay");
+
+        try {
+          const parsedHTML = parseYAYML(yaymlInput);
+          htmlPreview.innerHTML = parsedHTML;
+          errorDisplay.textContent = "";
+
+          localStorage.setItem("yaymlEditorContent", yaymlInput);
+        } catch (error) {
+          errorDisplay.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      window.addEventListener("load", function () {
+        const savedContent = localStorage.getItem("yaymlEditorContent");
+        if (savedContent) {
+          document.getElementById("yaymlInput").value = savedContent;
+          updatePreview();
+        }
+      });
+
+      document
+        .getElementById("yaymlInput")
+        .addEventListener("input", updatePreview);
+    </script>
+  </body>
+</html>
