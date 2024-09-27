@@ -11,14 +11,19 @@ YAYML is a minimal extension of the YAML format that introduces a simple syntax 
 ## Quick Start
 
 1. Check out the `specs.md` file for the full YAYML specification.
-2. Try out the YAYML to HTML Editor (`Improved YAYML to HTML Editor.html`) to see YAYML in action.
+2. Try out the [YAYML to HTML Editor](https://nlaz.github.io/yayml/editor.html) to see YAYML in action.
 
 ## Example
 
 ```yaml
-user(id=42, role=admin):
-  name: Jane Doe
-  email: jane.doe@example.com
+div(id=container, class=main):
+  h1: Welcome to YAYML
+  p(class=intro): This is a simple example of YAYML syntax.
+  ul:
+    - First item
+    - Second item
+    - Third item
+  button(onclick="alert('hello world');"): Button
 ```
 
 ## Contributing
